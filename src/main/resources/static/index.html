@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fitness Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary: {
+                  50: '#f0fdf4',
+                  100: '#dcfce7',
+                  200: '#bbf7d4',
+                  300: '#86efac',
+                  400: '#4ade80',
+                  500: '#22c55e',
+                  600: '#16a34a',
+                  700: '#15803f',
+                  800: '#166534',
+                  900: '#14532d',
+                }
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+<div class="min-h-screen flex flex-col">
+    <header class="bg-primary-600 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl font-bold tracking-tight">Fitness Tracker</h1>
+            <p class="mt-2 text-primary-200">Track your workouts and progress</p>
+        </div>
+    </header>
+
+    <main class="flex-1 container mx-auto px-4 py-8">
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Workout Form -->
+            <section class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <span class="bg-primary-100 text-primary-600 rounded-full p-2 mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </span>
+                    Log Workout
+                </h2>
+                <form id="workoutForm" class="mb-6">
+                    <div class="mb-4">
+                        <label for="exercise" class="block text-gray-700 font-medium mb-1">Exercise</label>
+                        <input type="text" id="exercise" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="sets" class="block text-gray-700 font-medium mb-1">Sets</label>
+                            <input type="number" id="sets" min="1" value="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500" required>
+                        </div>
+                        <div>
+                            <label for="reps" class="block text-gray-700 font-medium mb-1">Reps</label>
+                            <input type="number" id="reps" min="1" value="15" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="weight" class="block text-gray-700 font-medium mb-1">Weight (lbs)</label>
+                        <input type="number" id="weight" min="0" step="0.1" value="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    <button type="submit" class="w-full bg-primary-600 text-white py-2 px-4 rounded-md font-medium hover:bg-primary-700 transition duration-200">
+                        Log Workout
+                    </button>
+                </form>
+            </section>
+
+            <!-- Progress Logs -->
+            <section class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <span class="bg-primary-100 text-primary-600 rounded-full p-2 mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+                    Progress Log
+                </h2>
+                <div id="progressLog" class="space-y-3">
+                    <!-- Fetched workout logs will appear here -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 Fitness Tracker. All rights reserved.</p>
+            <p class="mt-2 text-gray-400 text-sm">Track your fitness journey with ease</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/api/workouts";
+
+    // Load progress logs from backend
+    async function loadProgress() {
+      const container = document.getElementById("progressLog");
+      container.innerHTML = '<p class="text-gray-500">Loading...</p>';
+      try {
+        const response = await fetch(`${API_URL}/progress`);
+        const logs = await response.json();
+
+        if (logs.length === 0) {
+          container.innerHTML = '<p class="text-gray-500">No logs yet. Start working out!</p>';
+          return;
+        }
+
+        container.innerHTML = ""; // Clear loading text
+        logs.reverse().forEach(log => {
+          const div = document.createElement("div");
+          div.className = "flex justify-between items-center bg-primary-50 rounded-lg p-4";
+          div.innerHTML = `
+            <div>
+              <h3 class="font-medium text-gray-800">${log.exercise}</h3>
+              <p class="text-sm text-gray-500">${log.sets} sets of ${log.reps} reps</p>
+            </div>
+            <span class="text-primary-600 font-medium">+${log.totalReps}</span>
+          `;
+          container.appendChild(div);
+        });
+      } catch (error) {
+        container.innerHTML = '<p class="text-red-600">Failed to load logs. Try again later.</p>';
+        console.error("Error loading progress logs:", error);
+      }
+    }
+
+    // Handle workout form submission
+    document.getElementById("workoutForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const exercise = document.getElementById("exercise").value;
+      const sets = parseInt(document.getElementById("sets").value);
+      const reps = parseInt(document.getElementById("reps").value);
+      const weight = parseFloat(document.getElementById("weight").value);
+
+      const workoutData = { exercise, sets, reps, weight };
+
+      try {
+        const response = await fetch(`${API_URL}/log`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(workoutData),
+        });
+
+        if (!response.ok) throw new Error("Failed to log workout");
+
+        alert(`Workout logged: ${exercise} (${sets}x${reps})`);
+
+        // Clear form
+        this.reset();
+        document.getElementById("weight").value = "0";
+
+        // Refresh progress
+        loadProgress();
+      } catch (error) {
+        alert("Error logging workout. Please try again.");
+        console.error("Log Error:", error);
+      }
+    });
+
+    // Load logs on page load
+    window.onload = loadProgress;
+</script>
+</body>
+</html>
